@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "lakemuwhkdfemfxcwcwb.supabase.co",
+      },
+      // Optional: allow any Supabase project host
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
       },
     ],
   },

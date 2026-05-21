@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { authOptions } from "@/lib/auth";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
-export async function POST(request: NextRequest) {
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await request.formData();
+  const formData = await req.formData();
   const file = formData.get("file") as File | null;
 
   if (!file) {
@@ -26,14 +27,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
+  const supabaseAdmin = getSupabaseAdmin();
+  if (!supabaseAdmin) {
+    return NextResponse.json(
+      { error: "Missing SUPABASE_SERVICE_ROLE_KEY (server-side) for uploads." },
+      { status: 500 },
+    );
+  }
+
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), buffer);
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  const { error } = await supabaseAdmin.storage
+    .from("product-images")
+    .upload(fileName, buffer, {
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabaseAdmin.storage.from("product-images").getPublicUrl(fileName);
+
+  return NextResponse.json({ url: publicUrl });
 }

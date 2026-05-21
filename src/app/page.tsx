@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Hero from "@/components/home/Hero";
 import IntroSection from "@/components/home/IntroSection";
@@ -6,6 +6,7 @@ import ProductCard from "@/components/products/ProductCard";
 import Button from "@/components/ui/Button";
 import { prisma } from "@/lib/prisma";
 import { getWhatsAppUrl } from "@/lib/constants";
+import type { ProductDTO } from "@/types/product";
 
 export default async function HomePage() {
   const featuredProducts = await prisma.product.findMany({
@@ -18,6 +19,19 @@ export default async function HomePage() {
     featuredProducts.length > 0
       ? featuredProducts
       : await prisma.product.findMany({ take: 6, orderBy: { createdAt: "desc" } });
+
+  const products: ProductDTO[] = displayProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    voltage: p.voltage,
+    capacity: p.capacity,
+    category: p.category,
+    imageUrl: p.imageUrl,
+    featured: p.featured,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  }));
 
   return (
     <>
@@ -44,12 +58,12 @@ export default async function HomePage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {displayProducts.map((product, i) => (
+            {products.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
 
-          {displayProducts.length === 0 && (
+          {products.length === 0 && (
             <p className="text-center text-slate-500">
               Products coming soon. Contact us on WhatsApp for inquiries.
             </p>
