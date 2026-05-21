@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import { prisma } from "@/lib/prisma";
 import { getWhatsAppUrl } from "@/lib/constants";
 import type { ProductDTO } from "@/types/product";
+export const runtime = "nodejs";
+
 export const dynamic = "force-dynamic";
 
 

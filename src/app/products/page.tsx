@@ -2,6 +2,8 @@
 import ProductsClient from "@/components/products/ProductsClient";
 import { prisma } from "@/lib/prisma";
 import type { ProductDTO } from "@/types/product";
+export const runtime = "nodejs";
+
 export const dynamic = "force-dynamic";
 
 
