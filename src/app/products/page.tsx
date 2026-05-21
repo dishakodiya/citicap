@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import ProductsClient from "@/components/products/ProductsClient";
 import { prisma } from "@/lib/prisma";
 import type { ProductDTO } from "@/types/product";
+export const dynamic = "force-dynamic";
+
 
 export const metadata: Metadata = {
   title: "Products",

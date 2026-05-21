@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import { prisma } from "@/lib/prisma";
 import { getWhatsAppUrl } from "@/lib/constants";
 import type { ProductDTO } from "@/types/product";
+export const dynamic = "force-dynamic";
+
 
 export default async function HomePage() {
   const featuredProducts = await prisma.product.findMany({
@@ -29,7 +31,7 @@ export default async function HomePage() {
     category: p.category,
     imageUrl: p.imageUrl,
     featured: p.featured,
-    createdAt: p.createdAt.toISOString(),
+    createdAt: p.createdAt.toISOString() ,
     updatedAt: p.updatedAt.toISOString(),
   }));
 
