@@ -1,6 +1,25 @@
 ﻿import { NextResponse } from "next/server";
-import net from "net";
 import dns from "dns/promises";
+import net from "net";
+
+type DnsEntry = { address: string; family: number };
+
+type DebugResult = {
+  host: string;
+  port: number;
+  dns?: DnsEntry[];
+  dnsError?: { message?: string; code?: string };
+  tcp?: { ok: boolean; ms: number; message?: string; code?: string };
+};
+
+function asError(value: unknown): Error | null {
+  return value instanceof Error ? value : null;
+}
+
+function getErrorCode(err: Error | null) {
+  const code = (err as unknown as { code?: unknown })?.code;
+  return typeof code === "string" ? code : undefined;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,19 +27,24 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    return NextResponse.json({ ok: false, error: "DATABASE_URL missing" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "DATABASE_URL missing" },
+      { status: 500 },
+    );
   }
 
   const u = new URL(url);
   const host = u.hostname;
   const port = Number(u.port || "5432");
 
-  const result: any = { host, port };
+  const result: DebugResult = { host, port };
 
   try {
-    result.dns = await dns.lookup(host, { all: true });
-  } catch (e: any) {
-    result.dnsError = { message: e?.message, code: e?.code };
+    const entries = await dns.lookup(host, { all: true });
+    result.dns = entries.map((e) => ({ address: e.address, family: e.family }));
+  } catch (e) {
+    const err = asError(e);
+    result.dnsError = { message: err?.message, code: getErrorCode(err) };
   }
 
   const start = Date.now();
@@ -36,9 +60,16 @@ export async function GET() {
       });
       socket.on("error", reject);
     });
+
     result.tcp = { ok: true, ms: Date.now() - start };
-  } catch (e: any) {
-    result.tcp = { ok: false, ms: Date.now() - start, message: e?.message, code: e?.code };
+  } catch (e) {
+    const err = asError(e);
+    result.tcp = {
+      ok: false,
+      ms: Date.now() - start,
+      message: err?.message,
+      code: getErrorCode(err),
+    };
   }
 
   return NextResponse.json(result);

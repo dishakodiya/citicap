@@ -12,7 +12,6 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log to console so it shows up in Vercel function logs
-    // eslint-disable-next-line no-console
     console.error(error);
   }, [error]);
 
@@ -46,3 +45,4 @@ export default function GlobalError({
     </div>
   );
 }
+
